@@ -1,0 +1,76 @@
+#### Monitor AAL Website Flignt Info - Arrivals and Depature pages.
+#### Generate output for ingestion into LogicMonitor.
+### Alert on Flight entries that do NOT roll off the display when they should
+### The script will also provide JSON format.  and includes summary flight info in the following format.
+### {"arrivals": {"scheduled": 64, "landed": 9, "cancelled": 0, "flights_web_display_errors": []}, "departures": {"scheduled": 44, "departed": 2, "cancelled": 0, "flights_web_display_errors": []}}
+###
+### Marco Marinelli, LogicMonitor   (Damonstration purpose only)
+###
+
+usage: AAL_FlightMon.py [-h] [-d] [-p [PRINT]] [-s [SCRAPE]] [-w [WWW]]
+
+AAL Monitor Flight Sechedul for listings that do NOT roll off
+
+Main script: AAL_FlightMon.py
+options:
+  -h, --help            show this help message and exit
+  -d, --deamon          Run the script in deamon mode.
+  -p [PRINT], --print [PRINT]
+                        Print the AAL Flight status info. (optional argument
+                        for CSV or JSON output )
+  -s [SCRAPE], --scrape [SCRAPE]
+                        scrape now
+  -w [WWW], --www [WWW]
+                        Strart HTTP Service
+# Ingestion to LogicMonitor
+Ingestion via JSON string, see format below. 3 methods for ingestion
+# 1 - Monitor file
+	Set up LM dat sourse to monitor file 
+	In Docker compose map /data to a named volume on the host, same host as LM Collector
+        In Docker compose sent ENV for file name  (inc Dir.  eg:  lm_file: "/data/aal_flight_mon.json")
+# 2 - Commnd line
+	Set up LM data source to run a docker commend on the host, same host as LM Collector
+        run powershell command: docker container exec -w /app <container_name> python.exe AAL_FlightMon.py -p json 2>&1 > NUL
+# 3 - Via Web service
+	Set up LM data source to collect via HTML GET
+        in Docker compose set web_services to True. Map a port (8666)
+	ensure LM Collect has access to the containers network
+        set data source to collect JSON string via HTML GET. http://nw_address:8666/json
+
+Run in Docker
+# see docker compose file
+
+# Web services
+## Start Web services
+# in compose 
+    #to start set ENV "web_services : True"
+    # Set the port. 8666 is the default
+    # ensure network access to the container
+ Note - simple Web services delivers following content only:
+    #  /json   = GET JSON for LM ingestion
+    #  /       = Flight summary  (intended for LM Dashboard HTML Widget
+    # /dump    = Dump todays Flight data
+
+
+
+#Sample JSON format:
+{"arrivals": {"scheduled": 64, "landed": 9, "cancelled": 0, "flights_web_display_errors": []}, "departures": {"scheduled": 44, "departed": 2, "cancelled": 0, "flights_web_display_errors": []}}
+
+
+DataBase.
+Based on SQLlite3. 
+DB holds data to maintain persistant view of AAL Web page flight status.
+DB can be delated.  Script will automatcily recreate if it doesnt exist already.
+Keeps max 365 days of data.
+DB name speficed in the AAL_FlightMon.cfg file
+
+
+Requires - Selenium Grid.
+grid_url:http://localhost:4444/wd/hub - Default URL. Adjust as needed , either in ENV or in AAL_FlightMon.cfg file
+
+# Helper / Utilities
+selGooglTest.py    - simple  script to test that the Selenium Grid is working  (you might need to manuallu edit the URL for the Grid)
+gen_flight_error.py - Insert a Flight error into the DB for testing purpose  (LM ingestion and Alert)
+dbquickscan.py  - scan the Flights.db database, do a dump of the tables. 
+
+

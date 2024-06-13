@@ -1,0 +1,6 @@
+selenium
+configparser
+tabulate
+datetime
+Pillow
+argparse

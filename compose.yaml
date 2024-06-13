@@ -1,0 +1,31 @@
+version: "3.0"  
+
+services:
+  aalfltmon:
+    container_name: aalflightmon
+    image: aalfltmon  
+    
+    ## Start Web services
+    # to start set ENV "web_services : True"
+    #  /json   = GET JSON for LM ingestion
+    #  /       = Flight summary  (intended for LM Dashboard HTML Widget
+    # /dump    = Dump todays Flight data
+    #ports:
+      #- "8666:8666"  # AAL Flingtmon Web service. default port 8666
+
+    #If ingesting json into LM via file, them map this to a directory that the LM collector has access to
+    #volumes:
+      #- ./data:/data  
+    restart: always  # Restart container always on failure or system restart
+    environment:
+      TZ: Australia/Adelaide  
+      grid_url: "http://192.168.1.20:4444/wd/hub"     # Default Grid URL is localhost - change if required
+      lm_file: "/data/aal_flight_mon.json"
+      web_services: "True"
+      web_services_port: 8666
+      arrvials_timeout: 60
+      departures_timeout: 60
+      scrape_loop_time: 300    #Loop time in seconds. defalut is 300, which is every 5 min
+      LOG_LEVEL: "INFO"
+
+
